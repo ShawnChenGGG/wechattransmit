@@ -397,7 +397,6 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
         windowManagerParams.gravity = Gravity.LEFT | Gravity.TOP;
         windowManagerParams.x = 700;
         windowManagerParams.y = 0;
-
         windowManagerParams.width = 120;
         windowManagerParams.height = 120;
 

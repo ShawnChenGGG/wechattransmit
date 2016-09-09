@@ -395,7 +395,6 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
         windowManagerParams.gravity = Gravity.LEFT | Gravity.TOP;
-
         windowManagerParams.x = 700;
         windowManagerParams.y = 0;
 

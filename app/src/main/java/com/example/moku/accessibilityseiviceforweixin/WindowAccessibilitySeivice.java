@@ -8,8 +8,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.support.v4.view.accessibility.AccessibilityRecordCompat;
@@ -22,7 +24,13 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -94,16 +102,24 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
 //            floatView.setVisibility(View.INVISIBLE);
 //        }
         String className = accessibilityEvent.getClassName().toString();
-        Log.e("className", "className==" + className);
-        Log.e("packagename", "packagename==" + packagename);
+        if ("com.tencent.mm.plugin.sns.ui.SightUploadUI".equals(className)) {
+            Log.e("className", "className==" + className);
+            //发小视频页面
+        }
         int eventType = accessibilityEvent.getEventType();
         AccessibilityNodeInfo noteInfo = accessibilityEvent.getSource();
         willClickNoteInfo = null;
-
+        if (noteInfo != null) {
+            Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
+        }
         switch (eventType) {
             case AccessibilityEvent.TYPE_VIEW_CLICKED://
                 if (noteInfo == null) {
                     break;
+                }
+                if ("发送".equals(noteInfo.getText())) {
+                    SystemClock.sleep(500);
+                    getVideoPath();
                 }
                 Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
                 break;
@@ -183,10 +199,7 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                 if (noteInfo == null) {
                     break;
                 }
-//                ClipboardManager clipboard = (ClipboardManager) this.getSystemService(Context.CLIPBOARD_SERVICE);
-//                ClipData clip = ClipData.
-//                clipboard.setPrimaryClip(clip);
-//                source.performAction(AccessibilityNodeInfoCompat.ACTION_PASTE);
+                Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
 
                 willClickNoteInfo = noteInfo;
                 nowEvent = accessibilityEvent;
@@ -197,6 +210,10 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                     if ("android.widget.LinearLayout".equals(child_movie.getClassName()) && child_movie.isEnabled() && child_movie.isClickable()) {
 
                     }
+                }
+                if ("android.widget.ListView".equals(noteInfo.getClassName()) && accessibilityEvent.getItemCount() == 2) {
+                    AccessibilityNodeInfo child_collector = noteInfo.getChild(1);
+                    child_collector.performAction(AccessibilityNodeInfo.ACTION_CLICK);//长按事件 点击收藏 将视频收藏 其实也在本地文件夹也保存了该视频
                 }
                 break;
             case AccessibilityEvent.TYPE_VIEW_SCROLLED:
@@ -240,12 +257,11 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                         if (child_movie != null && accessibilityEvent.getItemCount() == 2) {
                             child_movie.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                             Log.e("child_movie", child_movie.toString());
-//                            Log.e("ffffff", "eventType=" + accessibilityEvent.toString() + child_movie.toString());
                         }
 
                     }
                 }
-//                Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
+                Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
                 break;
             case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
                 if (noteInfo == null) {
@@ -416,59 +432,26 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                 n.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             }
         }
-        clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (child1 != null) {
             Rect rect = new Rect();
             child1.getBoundsInParent(rect);
             Log.e("rect", rect.toString() + ",,");//Rect(0, 0 - 448, 336)
             if (floatView.positionY >= rect.bottom) {
-                //child1.performAction(AccessibilityNodeInfo.ACTION_CLICK);//拿到某一条小视频,点击
-                child1.performAction(AccessibilityNodeInfo.ACTION_COPY);
-//                ClipData clip = ClipData.newPlainText("aa", "aaaaaaa");
-//                clipboard.setPrimaryClip(clip);
-//                video_node.performAction(AccessibilityNodeInfo.ACTION_PASTE);
-                /*try {
-                    byte[] bytes = objectToBytes(video_node);
-                    child1= (AccessibilityNodeInfo) bytesToObject(bytes);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }*/
-
+                child1.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
                 Log.e("video1", child1.toString());
                 Log.e("video2", video_node.toString());
             }
         }
     }
 
-/*
-    public static long addressOf(Object o) throws Exception {
-
-        Object[] array = new Object[] { o };
-
-        long baseOffset = unsafe.arrayBaseOffset(Object[].class);
-        int addressSize = unsafe.addressSize();
-        long objectAddress;
-        switch (addressSize) {
-            case 4:
-                objectAddress = unsafe.getInt(array, baseOffset);
-                break;
-            case 8:
-                objectAddress = unsafe.getLong(array, baseOffset);
-                break;
-            default:
-                throw new Error("unsupported address size: " + addressSize);
-        }
-        return (objectAddress);
-    }
-*/
-
     /**
-     * 拿到本地视频路径
+     * 替换录制小视频为收藏小视频
      *
      * @return
      */
-    private List<String> getVideoPath() {
-        File f = new File("/mnt/sdcard/tencent/MicroMsg");// /ce6a38ab33fcd1854eb771f656f62174/video
+    private void getVideoPath() {
+        File directory = Environment.getExternalStorageDirectory();
+        File f = new File(directory + "/tencent/MicroMsg");
         File[] files1 = f.listFiles();
         String path = "";
         List<String> paths = new ArrayList<>();
@@ -478,8 +461,9 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
         }
         int maxIndex = 0;
         for (int i = 0; i < indexs.size(); i++) {
+            Log.e("name", files1[i].getName());
             for (int j = i + 1; j < indexs.size(); j++) {
-                if (indexs.get(j) > indexs.get(i)) {
+                if (indexs.get(j) >= indexs.get(maxIndex)) {
                     if (!files1[j].toString().contains(".")) {
                         maxIndex = j;
                     }
@@ -489,32 +473,86 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
         int o = indexs.indexOf(indexs.get(maxIndex));
         String filePath = files1[maxIndex].toString();
         File defaultFile = null;
+        File defaultTwoFile = null;//朋友圈录制小视频 保存的本地路径
         if (filePath.contains("temp")) {
-            defaultFile = new File(filePath.substring(0, filePath.indexOf("temp")) + "/video");
+            defaultFile = new File(filePath.substring(0, filePath.indexOf("temp")) + "/favorite");
+            defaultTwoFile = new File(filePath.substring(0, filePath.indexOf("temp")) + "/draft");
         } else {
-            defaultFile = new File(filePath + "/video");
+            defaultTwoFile = new File(filePath + "/draft");//朋友圈录制小视频 保存的本地路径
+            defaultFile = new File(filePath + "/favorite");
         }
-        if (defaultFile.listFiles().length == 0) {
-            filePath = files1[o].toString();
-        }
-        Log.e(o + "length", maxIndex + ",indexs.size=" + indexs.toString() + "," + files1[maxIndex]);
-        File ff = null;
-        if (filePath.contains("temp")) {
-            ff = new File(filePath.substring(0, filePath.indexOf("temp")) + "/video");
+        if (defaultFile.listFiles() != null) {
+            if (defaultFile.listFiles().length == 0) {
+                filePath = files1[o].toString();
+                defaultFile = new File(filePath);
+            }
         } else {
-            ff = new File(filePath + "/video");
+            return;
         }
-        Log.e("length", ff.toString() + "");
-
-        File[] files = ff.listFiles();
-        for (int i = 0; i < files.length; i++) {
-            File fff = files[i];
-            if (fff.getName().endsWith(".mp4")) {
+        File[] defaultTwoFiles = defaultTwoFile.listFiles();
+        List<Long> allModiTimes = new ArrayList<>();
+        if (defaultTwoFiles != null) {
+            for (File mf : defaultTwoFiles) {
+                allModiTimes.add(mf.lastModified());
+            }
+        } else {
+            return;
+        }
+        if (allModiTimes.size() > 0) {
+            int max = 0;
+            long max_value = allModiTimes.get(max);
+            for (int i = 0; i < allModiTimes.size(); i++) {
+                Long theValue = allModiTimes.get(i);
+                if (theValue > max_value) {
+                    max_value = theValue;
+                    max = i;
+                }
+            }
+            File ffff = defaultTwoFiles[max];//拿到录制的小视频文件
+            Log.e(o + "length", maxIndex + ",indexs.size=" + indexs.toString() + "," + files1[maxIndex]);
+            File[] files = defaultFile.listFiles();
+            ArrayList<String> list = new ArrayList<>();
+            long now = 0;
+            for (int i = 0; i < files.length; i++) {
+                File fff = files[i];
+                Log.e("length", fff.toString() + "");
+                now = fff.lastModified();
                 path = fff.getAbsolutePath();
                 paths.add(path);
+                list.add(String.valueOf(now) + "," + i);
+            }
+            Collections.sort(list);
+            Log.e("list", list.toString());
+            if (list.size() > 0) {
+                try {
+                    String s = list.get(list.size() - 1);
+                    s = s.substring(s.indexOf(",") + 1);
+                    File mFile = files[Integer.parseInt(s)];
+                    File[] files2 = mFile.listFiles();
+                    File mF = files2[0];
+                    String cap_path = ffff.getAbsolutePath();
+                    if (ffff.exists()) {
+                        ffff.delete();
+                    }
+                    FileInputStream fis = new FileInputStream(mF);
+                    FileOutputStream fos = new FileOutputStream(cap_path);
+                    byte[] buf = new byte[1024];
+                    int len = 0;
+                    while ((len = fis.read(buf)) != -1) {
+                        fos.write(buf);
+                    }
+                    fos.flush();
+                    fis.close();
+                    fos.close();
+                    Log.e("path==","cap_path="+cap_path+",mF.name"+mF.getName());
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        return paths;
     }
-
 }

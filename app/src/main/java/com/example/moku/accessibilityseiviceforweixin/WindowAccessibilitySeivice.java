@@ -18,6 +18,7 @@ import android.support.v4.view.accessibility.AccessibilityRecordCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
@@ -111,8 +112,15 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
         willClickNoteInfo = null;
         if (noteInfo != null) {
             Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
+            List<AccessibilityNodeInfo> views = noteInfo.findAccessibilityNodeInfosByViewId("a_");
+            for (AccessibilityNodeInfo an : views) {
+                Log.e("noteInfo", "--++--eventType=" + accessibilityEvent.toString() + "，an=" + an.toString());
+            }
         }
-        switch (eventType) {
+        if (accessibilityEvent.toString().equals("TYPE_VIEW_CLICKED")) {
+
+        }
+        /*switch (eventType) {
             case AccessibilityEvent.TYPE_VIEW_CLICKED://
                 if (noteInfo == null) {
                     break;
@@ -141,7 +149,6 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                 }
                 if (accessibilityEvent.getItemCount() > 0) {
                     int childCount = noteInfo.getChildCount();
-                    Log.e("noteInfo", "aaaaa" + childCount + "");
                     AccessibilityNodeInfo ll_child = noteInfo.getChild(0);
                     if (ll_child != null) {//最近14天小视频 点击添加按钮
                         if (ll_child.getChild(0) != null && "android.widget.FrameLayout".equals(ll_child.getChild(0).getClassName())) {
@@ -319,7 +326,7 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                 }
                 Log.e("noteInfo", "eventType=" + accessibilityEvent.toString() + noteInfo.toString());
                 break;
-        }
+        }*/
         /*if (noteInfo != null) {
             boolean IsShipin = recycle1(noteInfo);
 //            Log.e("NodeInfo", "" + noteInfo);
@@ -437,11 +444,16 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
             child1.getBoundsInParent(rect);
             Log.e("rect", rect.toString() + ",,");//Rect(0, 0 - 448, 336)
             if (floatView.positionY >= rect.bottom) {
-                child1.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
+                child1.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);//长按小视频
                 Log.e("video1", child1.toString());
                 Log.e("video2", video_node.toString());
             }
         }
+    }
+
+    @Override
+    protected boolean onKeyEvent(KeyEvent event) {
+        return super.onKeyEvent(event);
     }
 
     /**
@@ -544,7 +556,7 @@ public class WindowAccessibilitySeivice extends AccessibilityService {
                     fos.flush();
                     fis.close();
                     fos.close();
-                    Log.e("path==","cap_path="+cap_path+",mF.name"+mF.getName());
+                    Log.e("path==", "cap_path=" + cap_path + ",mF.name" + mF.getName());
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 } catch (FileNotFoundException e) {
